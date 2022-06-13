@@ -1,0 +1,131 @@
+<Window x:Class="DatacuteFontConverterUI.RightsEditor"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:local="clr-namespace:DatacuteFontConverterUI"
+        xmlns:conversionRights="clr-namespace:DatacuteFontConverterUI.ConversionRights"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance local:RightsEditor, IsDesignTimeCreatable=True}"
+        Title="Rights Editor" Height="600" Width="800">
+    <Window.Resources>
+        <CollectionViewSource x:Key="RightsCheckListItems" Source="{Binding Path=RightsCheckItems}"/>
+        <DataTemplate x:Key="RightsCheckEditTemplate" DataType="conversionRights:RightsCheck">
+            <StackPanel>
+                <TextBlock
+                    Margin="8,8,8,8"
+                    Style="{StaticResource TitleStyle}">Individual Rights Test</TextBlock>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="120"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Label Grid.Row="0" Grid.Column="0">Item To Check</Label>
+                    <StackPanel Grid.Row="0" Grid.Column="1"
+                             Margin="4,4,4,4">
+                        <RadioButton GroupName="ItemGroup" Checked="ItemGroupChecked" Name="ItemRadioCopyright">Copyright</RadioButton>
+                        <RadioButton GroupName="ItemGroup" Checked="ItemGroupChecked" Name="ItemRadioLicense">License</RadioButton>
+                        <RadioButton GroupName="ItemGroup" Checked="ItemGroupChecked" Name="ItemRadioFamily">Font Family Name</RadioButton>
+                    </StackPanel>
+                    <Label Grid.Row="1" Grid.Column="0">Comparison Style</Label>
+                    <StackPanel Grid.Row="1" Grid.Column="1"
+                                Margin="4,4,4,4">
+                        <RadioButton GroupName="StyleGroup" Checked="StyleGroupChecked" Name="StyleRadioExactly">Exactly</RadioButton>
+                        <RadioButton GroupName="StyleGroup" Checked="StyleGroupChecked" Name="StyleRadioStartsWith">Starts With</RadioButton>
+                        <RadioButton GroupName="StyleGroup" Checked="StyleGroupChecked" Name="StyleRadioContains">Contains</RadioButton>
+                        <RadioButton GroupName="StyleGroup" Checked="StyleGroupChecked" Name="StyleRadioExactHash">Exact Hash</RadioButton>
+                    </StackPanel>
+                    <Label Grid.Row="2" Grid.Column="0">Compare To</Label>
+                    <TextBox Grid.Row="2" Grid.Column="1"
+                             Margin="4,4,4,4"
+                             Name="ComparisonText"
+                             MaxLines="8"
+                             Text="{Binding Path=Search}"/>
+                    <Label Grid.Row="3" Grid.Column="0">Applicable Rights</Label>
+                    <StackPanel Grid.Row="3" Grid.Column="1"
+                                Margin="4,4,4,4">
+                        <CheckBox Name="RightsCbRestricted">Conversion Restricted</CheckBox>
+                        <CheckBox Name="RightsCbAllowed" IsEnabled="False">Conversion Allowed</CheckBox>
+                        <CheckBox Name="RightsCbRFN" IsEnabled="False">Check Reserved Font Names</CheckBox>
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+        </DataTemplate>
+    </Window.Resources>
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Top">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Left"
+                           Margin="8,8,8,8"
+                           Style="{StaticResource TitleStyle}">Rights Tests</TextBlock>
+                <StackPanel DockPanel.Dock="Right" 
+                            Orientation="Horizontal" 
+                            Margin="8,8,8,8"
+                            HorizontalAlignment="Right">
+                    <Button Margin="4, 0" Padding="4" FontFamily="Segoe MDL2 Assets" Content="&#xe710;">
+                        <Button.ToolTip>
+                            <ToolTip>
+                                <TextBlock Text="Add new rule"/>
+                            </ToolTip>
+                        </Button.ToolTip>
+                    </Button>
+                    <Button Margin="4, 0" Padding="4" FontFamily="Segoe MDL2 Assets" Content="&#xe738;">
+                        <Button.ToolTip>
+                            <ToolTip>
+                                <TextBlock Text="Remove rule"/>
+                            </ToolTip>
+                        </Button.ToolTip>
+                    </Button>
+                    <Button Margin="4, 0" Padding="4" FontFamily="Segoe MDL2 Assets" Content="&#xe70e;">
+                        <Button.ToolTip>
+                            <ToolTip>
+                                <TextBlock Text="Move rule up"/>
+                            </ToolTip>
+                        </Button.ToolTip>
+                    </Button>
+                    <Button Margin="4, 0, 0, 0" Padding="4" FontFamily="Segoe MDL2 Assets" Content="&#xe70d;">
+                        <Button.ToolTip>
+                            <ToolTip>
+                                <TextBlock Text="Move rule down"/>
+                            </ToolTip>
+                        </Button.ToolTip>
+                    </Button>
+                </StackPanel>
+            </DockPanel>
+            <ListView Name="RightsCheckList"
+                      Margin="4,4,4,4"
+                      HorizontalContentAlignment="Stretch"
+                      ItemsSource="{Binding Source={StaticResource RightsCheckListItems}}"
+                      MinHeight="200"
+                      SelectionMode="Extended"
+                      SelectedIndex="0">
+                <ListView.View>
+                    <GridView>
+                        <GridView.Columns>
+                            <GridViewColumn DisplayMemberBinding="{Binding Path=ItemDesc}" Header="Attribute" Width="80"/>
+                            <GridViewColumn DisplayMemberBinding="{Binding Path=StyleDesc}" Header="Comparison" Width="80"/>
+                            <GridViewColumn DisplayMemberBinding="{Binding Path=Search}" Header="Matching String" Width="230"/>
+                            <GridViewColumn DisplayMemberBinding="{Binding Path=ApplicableRightsDesc}" Header="Applicable Rights" Width="300"/>
+                        </GridView.Columns>
+                    </GridView>
+                </ListView.View>
+            </ListView>
+        </StackPanel>
+        <StackPanel DockPanel.Dock="Bottom" 
+                    Orientation="Horizontal" 
+                    Margin="8,8,8,8"
+                    HorizontalAlignment="Right">
+            <Button Margin="4, 0" Padding="4" Content="Save" Command="Save"/>
+            <Button Margin="4, 0, 0, 0" Padding="4" Content="Cancel" Command="Close"/>
+        </StackPanel>
+        <ContentControl
+            Content="{Binding ElementName=RightsCheckList, Path=SelectedValue}"
+            ContentTemplate="{StaticResource RightsCheckEditTemplate}"/>
+    </DockPanel>
+</Window>

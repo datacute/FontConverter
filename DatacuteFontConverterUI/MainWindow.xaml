@@ -1,0 +1,474 @@
+﻿<Window x:Class="DatacuteFontConverterUI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
+        xmlns:local="clr-namespace:DatacuteFontConverterUI"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance local:MainWindow, IsDesignTimeCreatable=True}"
+        Title="Datacute TinyOLED Font Converter" Height="684" Width="1330">
+    <Window.Resources>
+        <CollectionViewSource x:Key="SortedFontFamilyItems" Source="{Binding Path=FontFamilyItems}">
+            <CollectionViewSource.SortDescriptions>
+                <scm:SortDescription PropertyName="Name" />
+            </CollectionViewSource.SortDescriptions>
+        </CollectionViewSource>
+        <CollectionViewSource x:Key="UnicodeBlockListItems" Source="{Binding Path=UnicodeBlockItems}"/>
+        <CollectionViewSource x:Key="CodepointRangeListItems" Source="{Binding Path=CodepointRangeItems}"/>
+        <CollectionViewSource x:Key="ConversionCodepointRangeListItems" Source="{Binding Path=ConversionCodepointRangeItems}">
+            <CollectionViewSource.SortDescriptions>
+                <scm:SortDescription PropertyName="Name" />
+            </CollectionViewSource.SortDescriptions>
+        </CollectionViewSource>
+        <DataTemplate x:Key="CodepointRangeEditTemplate" >
+            <StackPanel Orientation="Horizontal" Width="200">
+                <Slider Style="{StaticResource UpDownHexSliderStyle}"
+                        Margin="4,4,4,4"
+                        Width="80"
+                        Value="{Binding Path=From}"
+                        Minimum="1" Maximum="1114111" SmallChange="1"/>
+                <TextBlock Margin="7,4,5,4" Text="to">
+                </TextBlock>
+                <Slider Style="{StaticResource UpDownHexSliderStyle}"
+                        Margin="4,4,4,4"
+                        Width="80"
+                        Value="{Binding Path=To}"
+                        
+                        Minimum="1" Maximum="1114111" SmallChange="1"/>
+            </StackPanel>
+        </DataTemplate>
+        <ControlTemplate x:Key="CircleButton" TargetType="Button">
+            <Grid>
+                <TextBlock x:Name="backgroundCircle" Text="&#xf137;" Style="{StaticResource SymbolText}" Foreground="{TemplateBinding Background}"/>
+                <TextBlock Text="&#xf138;" Style="{StaticResource SymbolText}" Foreground="DodgerBlue"/>
+                <ContentPresenter/>
+            </Grid>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="true">
+                    <Setter Property="Foreground" TargetName="backgroundCircle" Value="PowderBlue"/>
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+    </Window.Resources>
+    <Window.CommandBindings>
+        <CommandBinding Command="Open" Executed="OpenFontCommand_Executed" />
+        <CommandBinding Command="Save" CanExecute="SaveCommand_CanExecute" Executed="SaveCommand_Executed"  />
+        <CommandBinding Command="SelectAll" Executed="SelectAllCommand_Executed" />
+        <CommandBinding Command="New" Executed="NewCommand_Executed" />
+        <CommandBinding Command="local:CustomCommands.Exit" Executed="CloseCommand_Executed" />
+        <CommandBinding Command="local:CustomCommands.Include" CanExecute="IncludeCommand_CanExecute" Executed="IncludeCommand_Executed" />
+        <CommandBinding Command="local:CustomCommands.Combine" CanExecute="CombineCommand_CanExecute" Executed="CombineCommand_Executed" />
+        <CommandBinding Command="local:CustomCommands.Sample" CanExecute="SampleCommand_CanExecute" Executed="SampleCommand_Executed" />
+        <CommandBinding Command="local:CustomCommands.TypefaceInfo" CanExecute="TypefaceInfoCommand_CanExecute" Executed="TypefaceInfoCommand_Executed" />
+        <CommandBinding Command="Delete" CanExecute="DeleteCommand_CanExecute" Executed="DeleteCommand_Executed" />
+    </Window.CommandBindings>
+    <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="_File">
+                <MenuItem Header="_Open Font" Command="Open"/>
+                <MenuItem Header="_Save" Command="Save" />
+                <Separator />
+                <MenuItem Header="_Exit" Command="local:CustomCommands.Exit" />
+            </MenuItem>
+        </Menu>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="180" />
+                <ColumnDefinition Width="180" />
+                <ColumnDefinition Width="200" />
+                <ColumnDefinition Width="234" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <DockPanel Grid.Row="0" Grid.Column="0">
+                <TextBlock DockPanel.Dock="Top"
+                           Style="{StaticResource TitleStyle}"
+                           Margin="8, 8,8,8">
+                    Font Family:
+                </TextBlock>
+                <CheckBox x:Name="RestrictToConvertible"
+                          DockPanel.Dock="Top"
+                          Margin="4,4,4,4"
+                          IsEnabled="True"
+                          IsChecked="True"
+                          Click="RestrictToConvertible_OnClick"
+                >Restrict to Convertible</CheckBox>
+                <ListBox Name="FontFamiliesListBox"
+                         Margin="4,4,4,4"
+                         VerticalAlignment="Stretch"
+                         ItemsSource="{Binding Source={StaticResource SortedFontFamilyItems}}"
+                         SelectionChanged="FontFamiliesListBox_OnSelectionChanged">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Name}">
+                                <ToolTipService.ToolTip>
+                                    <TextBlock FontFamily="{Binding Name}" FontSize="20" Text="{Binding Name}"/>
+                                </ToolTipService.ToolTip>
+                            </TextBlock>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+            <DockPanel Grid.Row="1" Grid.Column="0"
+                       HorizontalAlignment="Stretch">
+                <DockPanel DockPanel.Dock="Top">
+                    <TextBlock DockPanel.Dock="Left"
+                               Style="{StaticResource TitleStyle}"
+                               Margin="8,8,8,8">
+                        Typeface:
+                    </TextBlock>
+                    <Button DockPanel.Dock="Right"
+                            Margin="8,8,8,8"
+                            HorizontalAlignment="Right"
+                            Command="local:CustomCommands.TypefaceInfo">
+                        <Button.Resources>
+                            <Style TargetType="{x:Type Border}">
+                                <Setter Property="CornerRadius" Value="100"/>
+                                <Setter Property="BorderThickness" Value="1"/>
+                                <Setter Property="BorderBrush" Value="Red"/>
+                                <Setter Property="Padding" Value="0"/>
+                            </Style>
+                        </Button.Resources>
+                        <TextBlock Text="&#xf13f;" Style="{StaticResource SymbolText}"/>
+                    </Button>
+                </DockPanel>
+                <CheckBox x:Name="RestrictToNonSimulated"
+                          DockPanel.Dock="Top"
+                          Margin="4,4,4,4"
+                          IsEnabled="True"
+                          IsChecked="True"
+                          Click="RestrictToNonSimulated_OnClick"
+                >Exclude Simulated</CheckBox>
+                <ListBox Name="TypefaceList"
+                         Margin="4,4,4,4"
+                         VerticalAlignment="Stretch"
+                         ItemsSource="{Binding Path=TypefaceItems}"
+                         DisplayMemberPath="Name"
+                         SelectedIndex="0"
+                         SelectionChanged="TypefaceList_OnSelectionChanged">
+                </ListBox>
+            </DockPanel>
+            <StackPanel Grid.Row="2" Grid.Column="0">
+                <TextBlock Style="{StaticResource TitleStyle}"
+                           Margin="8,8,8,8">
+                    Settings:
+                </TextBlock>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Margin="4,4,4,4"
+                               Width="80">
+                        'm' Size:
+                    </TextBlock>
+                    <Slider Style="{StaticResource UpDownDoubleSliderStyle}"
+                            Margin="4,4,4,4"
+                            Width="60"
+                            Value="{Binding Path=EmSize}"
+                            Minimum="0.01" Maximum="100" SmallChange="0.1"/>
+                </StackPanel>
+            </StackPanel>
+
+            <DockPanel Grid.Row="0" Grid.Column="1"
+                       HorizontalAlignment="Stretch">
+                <TextBlock DockPanel.Dock="Top"
+                           Style="{StaticResource TitleStyle}"
+                           Margin="8,8,8,8">
+                    Category Filters:
+                </TextBlock>
+                <ListBox Name="CategoryList"
+                         Margin="4,4,4,4"
+                         VerticalAlignment="Stretch"
+                         ItemsSource="{Binding Path=CategoryItems}"
+                         DisplayMemberPath="Name"
+                         SelectionMode="Extended"
+                         SelectedIndex="0"
+                         SelectionChanged="CategoryList_OnSelectionChanged">
+                </ListBox>
+            </DockPanel>
+            <DockPanel Grid.Row="1" Grid.Column="1"
+                       HorizontalAlignment="Stretch">
+                <TextBlock DockPanel.Dock="Top"
+                           Style="{StaticResource TitleStyle}"
+                           Margin="8,8,8,8">
+                    Available:
+                </TextBlock>
+                <StackPanel DockPanel.Dock="Top"
+                            Orientation="Horizontal">
+                    <Button Command="SelectAll" Width="36"
+                            Margin="4,4,4,4">All</Button>
+                    <Button Command="local:CustomCommands.Combine" Width="60"
+                            Margin="4,4,4,4">Combine</Button>
+                    <Button Command="local:CustomCommands.Include" Width="60"
+                            Margin="4,4,4,4">Include</Button>
+                </StackPanel>
+                <ListBox Name="CodepointRangeList"
+                         Margin="4,4,4,4"
+                         VerticalAlignment="Stretch"
+                         ItemsSource="{Binding Source={StaticResource CodepointRangeListItems}}"
+                         SelectionMode="Extended"
+                         Grid.IsSharedSizeScope="True">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid ToolTipService.ToolTip="{Binding Path=Item.Example}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" SharedSizeGroup="Column1"/>
+                                    <ColumnDefinition Width="Auto" SharedSizeGroup="Column2"/>
+                                    <ColumnDefinition Width="Auto" SharedSizeGroup="Column3"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="{Binding Path=Item.FromDesc}"/>
+                                <TextBlock Grid.Column="1" Text=" to "/>
+                                <TextBlock Grid.Column="2" Text="{Binding Path=Item.ToDesc}"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+            <StackPanel Grid.Row="1" Grid.Column="1" Visibility="Hidden"
+                        HorizontalAlignment="Stretch">
+                <TextBlock Style="{StaticResource TitleStyle}"
+                           Margin="8,8,8,8">
+                    Stretch:
+                </TextBlock>
+                <ComboBox Name="FontStretchList"
+                          Margin="4,4,4,4"
+                          ItemsSource="{Binding Path=FontStretchItems}"
+                          DisplayMemberPath="Name"
+                          SelectedIndex="4"
+                          SelectionChanged="FontStretchList_OnSelectionChanged">
+                </ComboBox>
+                <TextBlock Style="{StaticResource TitleStyle}"
+                           Margin="8,8,8,8">
+                    Weight:
+                </TextBlock>
+                <ComboBox Name="FontWeightList"
+                          Margin="4,4,4,4"
+                          ItemsSource="{Binding Path=FontWeightItems}"
+                          DisplayMemberPath="Name"
+                          SelectedIndex="4"
+                          SelectionChanged="FontWeightList_OnSelectionChanged">
+                </ComboBox>
+                <TextBlock Style="{StaticResource TitleStyle}"
+                           Margin="8,8,8,8">
+                    Style:
+                </TextBlock>
+                <ComboBox Name="FontStyleList"
+                         Margin="4,4,4,4"
+                         ItemsSource="{Binding Path=FontStyleItems}"
+                         DisplayMemberPath="Name"
+                         SelectedIndex="0"
+                         SelectionChanged="FontStyleList_OnSelectionChanged">
+                </ComboBox>
+            </StackPanel>
+            <StackPanel Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3"
+                        HorizontalAlignment="Stretch">
+                <TextBlock Style="{StaticResource TitleStyle}"
+                           Margin="8,8,8,8">
+                    Save To:
+                </TextBlock>
+                <DockPanel HorizontalAlignment="Stretch">
+                    <TextBlock DockPanel.Dock="Left" Margin="4,4,4,4">Directory:</TextBlock>
+                    <Button x:Name="SelectDirectoryBtn"
+                            DockPanel.Dock="Right"
+                            Margin="2,4,4,4"
+                            Padding="4,0"
+                            Click="SelectDirectoryBtn_OnClick"
+                    >...</Button>
+                    <TextBox x:Name="SaveDirectory"
+                             Margin="4,4,2,4"
+                             HorizontalAlignment="Stretch">Select...</TextBox>
+                </DockPanel>
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Left" 
+                               Margin="4,4,4,4"
+                               >Base Filename:</TextBlock>
+                    <Button x:Name="SaveBtn"
+                            DockPanel.Dock="Right"
+                            Command="Save" Width="80"
+                            Margin="4,4,4,4"
+                            >Save</Button>
+                    <TextBox x:Name="SaveBaseFilename" Margin="4,4,4,4"></TextBox>
+                </DockPanel>
+            </StackPanel>
+            
+            <DockPanel Grid.Row="0" Grid.Column="2" Grid.ColumnSpan="2"
+                       HorizontalAlignment="Stretch">
+                <TextBlock DockPanel.Dock="Top"
+                           Style="{StaticResource TitleStyle}"
+                           Margin="8,8,8,8">
+                    Unicode Block Filters:
+                </TextBlock>
+                <ListBox Name="UnicodeBlockList"
+                         Margin="4,4,4,4"
+                         ItemsSource="{Binding Source={StaticResource UnicodeBlockListItems}}"
+                         VerticalAlignment="Stretch"
+                         SelectionMode="Extended"
+                         SelectedIndex="0"
+                         SelectionChanged="UnicodeBlockList_OnSelectionChanged"
+                         Grid.IsSharedSizeScope="True"
+                         ScrollViewer.CanContentScroll="False">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid ToolTipService.ToolTip="{Binding Path=Item.Example}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" SharedSizeGroup="Column1"/>
+                                    <ColumnDefinition Width="Auto" SharedSizeGroup="Column2"/>
+                                    <ColumnDefinition Width="Auto" SharedSizeGroup="Column3"/>
+                                    <ColumnDefinition Width="Auto" SharedSizeGroup="Column4"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="{Binding Path=Name}"/>
+                                <TextBlock Grid.Column="1" Text="{Binding Path=Item.FromDesc}"/>
+                                <TextBlock Grid.Column="2" Text=" to "/>
+                                <TextBlock Grid.Column="3" Text="{Binding Path=Item.ToDesc}"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+
+            <DockPanel Grid.Row="1" Grid.Column="2"
+                       HorizontalAlignment="Stretch">
+                <TextBlock DockPanel.Dock="Top"
+                           Style="{StaticResource TitleStyle}"
+                           Margin="8,8,8,8">
+                    To Convert:
+                </TextBlock>
+                <StackPanel DockPanel.Dock="Top"
+                            Orientation="Horizontal" Width="200">
+                    <Button Command="Delete" Width="60"
+                            Margin="4,4,4,4">Delete</Button>
+                    <Button Command="New" Width="36"
+                            Margin="4,4,4,4">Add</Button>
+                    <Button Command="local:CustomCommands.Sample" Width="60"
+                            Margin="4,4,4,4">Sample</Button>
+                </StackPanel>
+                <ContentControl DockPanel.Dock="Bottom"
+                                Content="{Binding ElementName=ConversionCodepointRangeList, Path=SelectedValue}"
+                                ContentTemplate="{StaticResource CodepointRangeEditTemplate}"/>
+                <ListBox
+                    Name="ConversionCodepointRangeList"
+                    Margin="4,4,4,4"
+                    VerticalAlignment="Stretch"
+                    ItemsSource="{Binding Source={StaticResource ConversionCodepointRangeListItems}}"
+                    SelectedValuePath="Item"
+                    SelectionMode="Extended"
+                    Grid.IsSharedSizeScope="True">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid ToolTipService.ToolTip="{Binding Path=Item.Example}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" SharedSizeGroup="Column1"/>
+                                    <ColumnDefinition Width="Auto" SharedSizeGroup="Column2"/>
+                                    <ColumnDefinition Width="Auto" SharedSizeGroup="Column3"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="{Binding Path=Item.FromDesc}"/>
+                                <TextBlock Grid.Column="1" Text=" to "/>
+                                <TextBlock Grid.Column="2" Text="{Binding Path=Item.ToDesc}"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+            <StackPanel Grid.Row="1" Grid.Column="3">
+                <TextBlock Style="{StaticResource TitleStyle}"
+                           Margin="8,8,8,8">
+                    Metrics:
+                </TextBlock>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Grid.Column="0" Margin="4,4,4,4" Text="Ranges:" />
+                    <TextBlock Grid.Row="0" Grid.Column="1" Margin="4,4,4,4" Text="1" x:Name="MetricsRanges"/>
+                    <TextBlock Grid.Row="1" Grid.Column="0" Margin="4,4,4,4" Text="Characters:" />
+                    <TextBlock Grid.Row="1" Grid.Column="1" Margin="4,4,4,4" Text="1" x:Name="MetricsCharacters"/>
+                    <TextBlock Grid.Row="2" Grid.Column="0" Margin="4,4,4,4" Text="Missing Characters:" />
+                    <TextBlock Grid.Row="2" Grid.Column="1" Margin="4,4,4,4" Text="1" x:Name="MetricsMissingCharacters"/>
+                    <TextBlock Grid.Row="3" Grid.Column="0" Margin="4,4,4,4" Text="Height in Pages:" />
+                    <TextBlock Grid.Row="3" Grid.Column="1" Margin="4,4,4,4" Text="1" x:Name="MetricsHeightInPages"/>
+                    <TextBlock Grid.Row="4" Grid.Column="0" Margin="4,4,4,4" Text="Tallest Character:" />
+                    <TextBlock Grid.Row="4" Grid.Column="1" Margin="4,4,4,4" Text="1" x:Name="MetricsTallestCharacter"/>
+                    <TextBlock Grid.Row="5" Grid.Column="0" Margin="4,4,4,4" Text="Bytes for Pixels:" />
+                    <TextBlock Grid.Row="5" Grid.Column="1" Margin="4,4,4,4" Text="1" x:Name="MetricsPixelBytes"/>
+                    <TextBlock Grid.Row="6" Grid.Column="0" Margin="4,4,4,4" Text="Total Bytes:" />
+                    <TextBlock Grid.Row="6" Grid.Column="1" Margin="4,4,4,4" Text="1" x:Name="MetricsTotalBytes"/>
+                </Grid>
+            </StackPanel>
+
+            <StackPanel Grid.Row="0" Grid.Column="4"
+                        MinWidth="520"
+                        HorizontalAlignment="Left">
+                <TextBlock Style="{StaticResource TitleStyle}"
+                           Margin="8,8,8,8">
+                    Font Preview:
+                </TextBlock>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Margin="4,4,4,4"
+                               Width="80">
+                        Preview Scale:
+                    </TextBlock>
+                    <Slider Style="{StaticResource UpDownDoubleSliderStyle}"
+                            Margin="4,4,4,4"
+                            Width="60"
+                            Value="{Binding Path=PreviewScale}"
+                            Minimum="1" Maximum="5" SmallChange="0.1"/>
+                </StackPanel>
+                <TextBox Name="SampleTextInTypeface"
+                           Margin="4,4,4,4"
+                           Typography.StandardLigatures="False" 
+                           Typography.ContextualLigatures="False"
+                           Typography.ContextualAlternates="False"
+                           Typography.Kerning="False"
+                           TextWrapping="Wrap"
+                           VerticalAlignment="Stretch"
+                           AcceptsReturn="True"
+                           HorizontalAlignment="Stretch"
+                           MinHeight="184"
+                           Width="512"
+                           MinLines="8"
+                           VerticalScrollBarVisibility="Auto"
+                           TextChanged="SampleTextInTypeface_OnTextChanged">
+                    ABCabc
+                </TextBox>
+            </StackPanel>
+            
+            <StackPanel Grid.Row="1" Grid.Column="4" Grid.RowSpan="2"
+                        Width="520"
+                        HorizontalAlignment="Left">
+                <TextBlock Style="{StaticResource TitleStyle}"
+                           Margin="8,8,8,8">
+                    Converted Font Preview:
+                </TextBlock>
+                <CheckBox x:Name="PreviewEnabled"
+                          Margin="4,4,4,4"
+                          IsEnabled="True"
+                          IsChecked="False"
+                          Checked="PreviewEnabled_OnChecked"
+                          >Preview Converted Font</CheckBox>
+                <Border BorderThickness="4"
+                        BorderBrush="Black"
+                        Background="Black"
+                        Margin="4,4,4,4"
+                        VerticalAlignment="Top">
+                <Image x:Name="SampleTextImage"
+                       Width="512"
+                       Height="256"
+                       VerticalAlignment="Top"/>
+                </Border>
+            </StackPanel>
+        </Grid>
+    </DockPanel>
+</Window>

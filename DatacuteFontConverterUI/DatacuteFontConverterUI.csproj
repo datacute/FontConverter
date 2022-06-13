@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net6.0-windows</TargetFramework>
+        <UseWPF>true</UseWPF>
+        <UseWindowsForms>true</UseWindowsForms>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\DatacuteFontConverter\DatacuteFontConverter.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Reference Include="WindowsBase" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include="TODO.md" />
+    </ItemGroup>
+
+</Project>
